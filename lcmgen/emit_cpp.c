@@ -344,6 +344,52 @@ static void emit_header_start(lcmgen_t *lcmgen, FILE *f, lcm_struct_t *ls)
         }
         emit(0, "");
     }
+    
+    // default constructor
+    if(g_ptr_array_size(ls->members)) {
+        int num_init = 0;
+        for (unsigned int mind = 0; mind < g_ptr_array_size(ls->members); mind++) {
+            lcm_member_t *lm = (lcm_member_t *) g_ptr_array_index(ls->members, mind);
+            char* lc_typename = lm->type->lctypename;
+            int ndim = g_ptr_array_size(lm->dimensions);
+            if (ndim == 0) {
+                if (lcm_is_primitive_type(lc_typename) && (strcmp(lc_typename, "string")!=0))
+                    num_init++;
+            }
+        }
+        
+        emit(1, "public:");
+        if(num_init > 0) {
+            emit(2, "%s(): ", sn);
+            static const char *init_val[] = {"0", "0.0f", "0.0"};
+            for (unsigned int mind = 0; mind < g_ptr_array_size(ls->members); mind++) {
+                lcm_member_t *lm = (lcm_member_t *) g_ptr_array_index(ls->members, mind);
+                char* lc_typename = lm->type->lctypename;
+                int ndim = g_ptr_array_size(lm->dimensions);
+                if (ndim == 0) {
+                    if (lcm_is_primitive_type(lc_typename) && (strcmp(lc_typename, "string")!=0)) {
+                        num_init--;
+                        int idx = 0;
+                        if(!strcmp(lc_typename, "float")) {
+                            idx = 1;
+                        }
+                        else if(!strcmp(lc_typename, "double")) {
+                            idx = 2;
+                        }
+                        if(num_init > 0)
+                            emit(3, "%s(%s), ", lm->membername, init_val[idx]);
+                        else
+                            emit(3, "%s(%s)", lm->membername, init_val[idx]);
+                    }
+                }
+            }
+            emit(2, "{}");
+        }
+        else {
+            emit(2, "%s() {}", sn);
+        }
+        emit(0, "");
+    }
 
     emit(1, "public:");
     emit(2, "/**");
