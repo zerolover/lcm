@@ -9,6 +9,7 @@
 #endif
 #endif
 
+#include <signal.h>
 #include <cstdio> /* needed for FILE* */
 #include <string>
 #include <vector>
@@ -51,7 +52,7 @@ class LCM {
      *
      * @sa lcm_create()
      */
-    inline LCM(std::string lcm_url = "");
+    inline LCM(std::string lcm_url = "", bool useSIGINT = false);
 
     /**
      * @brief Constructor.

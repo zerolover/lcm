@@ -5,6 +5,10 @@
 #endif
 
 // =============== implementation ===============
+static volatile sig_atomic_t stopFlag = 0;
+static void handler(int) {
+    stopFlag = 1;
+}
 
 int Subscription::setQueueCapacity(int num_messages)
 {
@@ -124,8 +128,10 @@ class LCMLambdaSubscription : public Subscription {
 };
 #endif
 
-inline LCM::LCM(std::string lcm_url) : owns_lcm(true)
+inline LCM::LCM(std::string lcm_url, bool useSIGINT) : owns_lcm(true)
 {
+    if(useSIGINT)
+        signal(SIGINT, &handler);
     this->lcm = lcm_create(lcm_url.c_str());
 }
 
@@ -208,6 +214,7 @@ inline int LCM::handle()
 
 inline int LCM::handleTimeout(int timeout_millis)
 {
+    if(stopFlag) return -1;
     if (!this->lcm) {
         fprintf(stderr, "LCM instance not initialized.  Ignoring call to handle()\n");
         return -1;
